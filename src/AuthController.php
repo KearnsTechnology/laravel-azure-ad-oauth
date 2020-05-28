@@ -7,6 +7,8 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
+    public function __construct(\Illuminate\Http\Request $request) { }
+
     public function redirectToOauthProvider()
     {
         return Socialite::driver('azure-oauth')->redirect();
@@ -19,6 +21,16 @@ class AuthController extends Controller
         $authUser = $this->findOrCreateUser($user);
 
         auth()->login($authUser, true);
+
+        session([
+            'microsoft_sid' => request('session_state'),
+        ]);
+
+        /*
+        session([
+            'microsoft_sid' => request('session_state'),
+        ]);
+        */
 
         // session([
         //     'azure_user' => $user

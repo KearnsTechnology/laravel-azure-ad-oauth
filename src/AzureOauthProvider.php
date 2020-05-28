@@ -2,6 +2,7 @@
 
 namespace Metrogistics\AzureSocialite;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Laravel\Socialite\Two\User;
 use Laravel\Socialite\Two\AbstractProvider;
@@ -13,15 +14,25 @@ class AzureOauthProvider extends AbstractProvider implements ProviderInterface
     protected $scopes = ['User.Read'];
     protected $scopeSeparator = ' ';
 
+    protected $domain_hint;
+    protected $login_base;
+
+    public function __construct(Request $request, $clientId, $clientSecret, $redirectUrl, $guzzle = [])
+    {
+        parent::__construct($request, $clientId, $clientSecret, $redirectUrl, $guzzle);
+
+        $this->domain_hint = config('azure-oath.credentials.domain_hint');
+        $this->login_base = $this->domain_hint ?? 'common';
+    }
+
     protected function getAuthUrl($state)
     {
-        $domain_hint = config('azure-oath.credentials.domain_hint');
-        return $this->buildAuthUrlFromBase('https://login.microsoftonline.com/common/oauth2/authorize', $state) . ($domain_hint ? "&domain_hint=$domain_hint" : "");
+        return $this->buildAuthUrlFromBase("https://login.microsoftonline.com/{$this->login_base}/oauth2/authorize", $state) . ($this->domain_hint ? "&domain_hint=$this->domain_hint" : "");
     }
 
     protected function getTokenUrl()
     {
-        return 'https://login.microsoftonline.com/common/oauth2/token';
+        return "https://login.microsoftonline.com/{$this->login_base}/oauth2/token";
     }
 
     protected function getTokenFields($code)
